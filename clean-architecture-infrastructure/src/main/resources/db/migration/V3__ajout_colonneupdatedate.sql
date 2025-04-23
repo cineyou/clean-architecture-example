@@ -1,0 +1,1 @@
+ALTER TABLE public.compte ADD COLUMN date_modification timestamp(6);
