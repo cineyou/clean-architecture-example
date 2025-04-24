@@ -147,6 +147,149 @@ Cette commande va :
 
 L'application sera accessible à l'adresse : http://localhost:8082/api/v1/comptes
 
+## Configuration Kubernetes
+Le projet inclut des fichiers de configuration Kubernetes pour déployer l'application sur Minikube.
+
+### Prérequis
+- Minikube installé et configuré
+- kubectl installé
+- Ingress controller activé dans Minikube
+
+### Déploiement sur Minikube avec Makefile
+
+Le projet inclut un Makefile qui automatise le processus de déploiement sur Minikube.
+
+#### Utilisation du Makefile
+
+1. Afficher l'aide du Makefile :
+   ```
+   make help
+   ```
+
+2. Démarrer Minikube et activer Ingress :
+   ```
+   make minikube-start
+   ```
+
+3. Construire et déployer l'application en une seule commande :
+   ```
+   make all
+   ```
+   Cette commande exécute les étapes suivantes :
+   - Compilation du projet avec Maven
+   - Construction de l'image Docker
+   - Chargement de l'image dans Minikube
+   - Déploiement de l'application avec Kubernetes
+
+4. Configurer le fichier hosts pour l'Ingress :
+   ```
+   make setup-hosts
+   ```
+   Suivez ensuite les instructions affichées pour exécuter la commande PowerShell en tant qu'administrateur.
+
+5. Afficher l'URL de l'application :
+   ```
+   make show-url
+   ```
+
+6. Nettoyer les ressources :
+   ```
+   make clean
+   ```
+
+#### Déploiement manuel (alternative)
+
+Si vous préférez ne pas utiliser le Makefile, vous pouvez suivre ces étapes manuelles :
+
+1. Démarrer Minikube :
+   ```
+   minikube start
+   ```
+
+2. Activer l'addon Ingress :
+   ```
+   minikube addons enable ingress
+   ```
+
+3. Construire l'image Docker de l'application :
+   ```
+   mvn clean package
+   docker build -t clean-architecture-app:1.0 .
+   ```
+
+4. Charger l'image dans Minikube :
+   ```
+   minikube image load clean-architecture-app:1.0
+   ```
+
+5. Déployer l'application avec Kustomize :
+   ```
+   kubectl apply -k kubernetes/
+   ```
+
+6. Ajouter l'entrée dans le fichier hosts pour l'Ingress (Windows) :
+   ```
+   # Exécuter cette commande dans PowerShell en tant qu'administrateur
+   Add-Content -Path 'C:\Windows\System32\drivers\etc\hosts' -Value "$(minikube ip) clean-architecture.local"
+   ```
+
+7. Accéder à l'application :
+   ```
+   http://clean-architecture.local/api/v1/comptes
+   ```
+
+### Vérification du déploiement
+
+Pour vérifier que tous les composants sont correctement déployés :
+
+```
+kubectl get all
+kubectl get ingress
+```
+
+### Suppression du déploiement
+
+Pour supprimer le déploiement :
+
+```
+kubectl delete -k kubernetes/
+```
+
+## Dépannage
+
+### Erreur "no main manifest attribute, in app.jar"
+Si vous rencontrez cette erreur lors du déploiement sur Minikube, cela signifie que le fichier JAR n'a pas d'attribut Main-Class dans son manifeste. Pour résoudre ce problème :
+
+1. Assurez-vous que le plugin Spring Boot Maven est correctement configuré dans le fichier pom.xml du module infrastructure :
+   ```xml
+   <plugin>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-maven-plugin</artifactId>
+       <configuration>
+           <mainClass>org.example.InfraBootApplication</mainClass>
+           <layout>JAR</layout>
+           <executable>true</executable>
+       </configuration>
+       <executions>
+           <execution>
+               <goals>
+                   <goal>repackage</goal>
+               </goals>
+           </execution>
+       </executions>
+   </plugin>
+   ```
+
+2. Reconstruisez l'application avec Maven :
+   ```
+   mvn clean package
+   ```
+
+3. Reconstruisez l'image Docker et redéployez sur Minikube :
+   ```
+   make docker-build minikube-load deploy
+   ```
+
 ## Contribution
 Les contributions sont les bienvenues ! N'hésitez pas à soumettre des pull requests ou à ouvrir des issues pour améliorer ce projet.
 
