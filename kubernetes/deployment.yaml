@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clean-architecture-app
+  labels:
+    app: clean-architecture-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clean-architecture-app
+  template:
+    metadata:
+      labels:
+        app: clean-architecture-app
+    spec:
+      containers:
+      - name: clean-architecture-app
+        image: clean-architecture-app:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres:5432/postgres
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: clean-architecture-config
